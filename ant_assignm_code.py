@@ -21,10 +21,11 @@ class Grid_cell:
 
 
 
-#declaration of global variables
+#declaration and initialization of global variables
 ant_list=[];
 grid=[[]];
 delta=1
+epsilon = 0.2
 
 # scene_grid
 #m rows, n columns, k ants
@@ -105,7 +106,6 @@ def probability(ant):
 
 # transit function
 #ok, funziona ed è stata testata
-#all'inizio quando tutet le probabilità sono settate al caso base bisogna fare diversi tentetivi per arrivare a una fonte di cibo
 def transit(ant):
 
     # Get information from neighboring cells
@@ -115,11 +115,11 @@ def transit(ant):
     probabilities = probability(ant)
     
     # Choose a cell randomly based on probabilities
-    selected_cell = random.choices(neighbors_cells, weights=probabilities, k=1)[0]
+    selected_cell = random.choices(neighbors_cells, weights=probabilities)[0]
 
 
     # Update ant's position on the grid
-    ant.x,ant.y=selected_cell[0],selected_cell[0]
+    ant.x,ant.y=selected_cell[0],selected_cell[1]
 
     return ant
 
@@ -127,7 +127,7 @@ def transit(ant):
 #da testare
 def update_ants(ants_list):
 
-    global grid, delta
+    global grid, delta,epsilon
 
     # Update ants position on the grid
     for ant in ants_list:
@@ -143,20 +143,19 @@ def update_ants(ants_list):
             grid[ant.x][ant.y].tag = 'P'
         elif grid[ant.x][ant.y].tag == 'N' and ant.C == 1:
             ant.C = 0
-        elif ant.C == 1:    #the ant brings food so the pheromone level of the cell is increased of delta
+        elif ant.C == 1 and grid[ant.x][ant.y].tag != 'F':    #the ant brings food so the pheromone level of the cell is increased of delta
             grid[ant.x][ant.y].pheromone +=delta
             grid[ant.x][ant.y].tag = 'P'
     
 
     #pheromone evaporation
-
-    #da testare se funziona
     for i in range(0,len(grid)):
         for j in range(0,len(grid[0])):
             if grid[i][j].tag == 'P':
-                if grid[i][j].pheromone-delta >= 0:
-                    grid[i][j].pheromone -=delta
+                if grid[i][j].pheromone-epsilon >= 0:
+                    grid[i][j].pheromone =(1-epsilon)*grid[i][j].pheromone
                 else :
+                    grid[i][j].pheromone = 0
                     grid[i][j].tag = 'E'
         
 
@@ -237,7 +236,7 @@ def print_ants():
 #for i in neighbors_list:
 #    print(i[0], i[1], end='\t')  # Usa 'end' per separare gli elementi con uno spazio invece di una nuova riga
 
-print_grid()
+#print_grid()
 
 ant_list_test=[ant_list[0]]
 for i in range(0, 10):
