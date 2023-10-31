@@ -1,6 +1,7 @@
 
 import random
-import matplotlib.pyplot as plt
+from PIL import Image, ImageDraw
+
 
 
 
@@ -15,7 +16,7 @@ class Ant:
 
 #class "Grid_cell"
 class Grid_cell:
-    def __init__(self, tag, pheromone=0):
+    def __init__(self, tag, pheromone=0.0):
         self.tag = tag
         self.pheromone = pheromone
 
@@ -125,6 +126,7 @@ def transit(ant):
 
 
 #da testare
+#sembrerebbe funzionare
 def update_ants(ants_list):
 
     global grid, delta,epsilon
@@ -133,6 +135,16 @@ def update_ants(ants_list):
     for ant in ants_list:
         ant = transit(ant)
     
+    #pheromone evaporation
+    for i in range(0,len(grid)):
+        for j in range(0,len(grid[0])):
+            if grid[i][j].tag == 'P':
+                if grid[i][j].pheromone-epsilon >= 0:
+                    grid[i][j].pheromone =(1-epsilon)*grid[i][j].pheromone
+                else :
+                    grid[i][j].pheromone = 0
+                    grid[i][j].tag = 'E'
+        
     #food interaction
     #pheromone modifications
     for ant in ants_list:
@@ -148,66 +160,70 @@ def update_ants(ants_list):
             grid[ant.x][ant.y].tag = 'P'
     
 
-    #pheromone evaporation
-    for i in range(0,len(grid)):
-        for j in range(0,len(grid[0])):
-            if grid[i][j].tag == 'P':
-                if grid[i][j].pheromone-epsilon >= 0:
-                    grid[i][j].pheromone =(1-epsilon)*grid[i][j].pheromone
-                else :
-                    grid[i][j].pheromone = 0
-                    grid[i][j].tag = 'E'
-        
 
     return ants_list
 
 
+def plot_ants():
+    global grid, ant_list
+
+    # Define the colors of the cells
+    colors = {'E': 'green', 'F': 'red', 'N': 'brown', 'P': 'darkgreen'}
+
+    cell_size = 20  # Size of the cell (in pixels)
+    line_color = 'black'
+    ant_color = 'black'  # Colore delle formiche
+
+    # Inizializza l'immagine per la griglia
+    height = len(grid) * cell_size
+    width = len(grid[0]) * cell_size
+
+    grid_image = Image.new("RGB", (width, height), "white")
+    draw = ImageDraw.Draw(grid_image)
+
+    # Disegna le celle con i colori corrispondenti e le linee nere
+    for i in range(len(grid)):
+        for j in range(len(grid[0])):
+            cell_type = grid[i][j].tag
+            cell_color = colors.get(cell_type)
+
+            # Creazione dell'immagine della cella
+            x1, y1 = j * cell_size, i * cell_size  # Punto di inizio
+            x2, y2 = x1 + cell_size, y1 + cell_size  # Punto di fine
+
+            # Disegna la cella
+            draw.rectangle([x1, y1, x2, y2], fill=cell_color, outline=line_color)
+
+    # Disegna le formiche al centro di ciascuna cella
+    for ant in ant_list:
+        ant_x = ant.x * cell_size + cell_size // 2
+        ant_y = ant.y * cell_size + cell_size // 2
+        ant_size = 5  # Dimensione della formica
+        draw.rectangle([ ant_y - ant_size,ant_x - ant_size, ant_y + ant_size,ant_x + ant_size], fill=ant_color)
+
+    # Mostra la griglia con le formiche
+    grid_image.show()
 
 
 # foraging function
 #da finire
+# k = numero di iterazioni
 
-
-    # Stampa la matrice riga per riga
-
-
-
-# plot_ants
-#da verificare che la funzione works correctly
-
-
-# da verificare che funzioni l'import della funzione e dopodiché modificare il seguente codice in maniera più elegante
-#test
-
-colors = {'E': 'green', 'F': 'red', 'N': 'blue', 'P': 'yellow'}
-
-# Function to visualize the grid
-def visualize_grid(grid):
-    nrow = len(grid)
-    ncol = len(grid[0])
+def foraging(k):
+    global grid, ant_list    
+    plot_ants()
+    for t in range(0,k):
+        ant_list=update_ants(ant_list)
+        plot_ants()
     
-    # Create a figure and axis
-    fig, ax = plt.subplots()
-    
-    for i in range(nrow):
-        for j in range(ncol):
-            area_type = grid[i][j]
-            color = colors.get(area_type, 'gray')  # Default to gray if the type is not recognized
-            ax.add_patch(plt.Rectangle((j, nrow - 1 - i), 1, 1, color=color))
+    return grid
 
-    ax.set_aspect('equal')
-    ax.set_xticks(range(ncol))
-    ax.set_yticks(range(nrow))
-    ax.grid(linewidth=1, color='black')
-    plt.gca().invert_yaxis()
-    plt.show()
 
 
 #--------------------------------------------------------------
 
 #test the functions
 
-scene_grid(4,4,5)
 
 def print_grid():
         #stampa la matrice
@@ -229,20 +245,17 @@ def print_ants():
 
 
 
-#print("Neighbors:\n")
-#stampa la lista dei vicini della prima formica
-#neighbors_list=neighbors(ant_list[0])
-
-#for i in neighbors_list:
-#    print(i[0], i[1], end='\t')  # Usa 'end' per separare gli elementi con uno spazio invece di una nuova riga
-
-#print_grid()
-
-ant_list_test=[ant_list[0]]
-for i in range(0, 10):
 
 
-    print("%d° transit of the first ant:",i,"\n")
+
+scene_grid(4,4,1)
+#test the functions
+
+ant_list_test=ant_list
+for i in range(0, 5):
+
+
+    print("%d° Transition of the first ant al tempo :",i,"\n")
 
     ant_list_test=update_ants(ant_list_test)
     print("Dati della formica :",ant_list_test[0].x, ant_list_test[0].y, ant_list_test[0].C, "\n")  # Usa 'end' per separare gli elementi con uno spazio invece di una nuova riga
@@ -254,12 +267,9 @@ for i in range(0, 10):
 
 
     print("Grid after the %d° transiction ant:",i)
-    print_grid()
+    plot_ants()
     print("\n-----------------------------------\n")
 
 
 #test the functions
 #--------------------------------------------------------------
-
-    
-
