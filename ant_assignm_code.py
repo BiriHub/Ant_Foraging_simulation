@@ -1,6 +1,7 @@
 
-import random
+import random,math
 from PIL import Image, ImageDraw
+from matplotlib.pyplot import plot
 
 
 
@@ -28,27 +29,45 @@ grid=[[]];
 delta=1
 epsilon = 0.2
 
+
 # scene_grid
 #m rows, n columns, k ants
 
 #ok, funziona ed è stata testata
 def scene_grid(m, n, k):
+
+    #grid parameters for randomically generated grid
+    max_Nest=5 # max number of nests
+
+    tag_weights=[0.955,0.04,0.005] #probability for 'E', 'F','N' respectively
+
     # Generate a grid G with m rows and n columns
     global grid 
-    grid=[[Grid_cell(tag='E',pheromone=0) for _ in range(m)] for _ in range(n)]
+    grid=[[Grid_cell(tag='E',pheromone=0) for _ in range(n)] for _ in range(m)]
 
-    # Define a predefined grid
-    # 1. Nest
-    grid[0][0].tag = 'N'
-    
-    # 2. Set food
-    grid[m-2][n-2].tag = 'F'
-    grid[m-2][0].tag = 'F'
-    grid[0][n-2].tag = 'F'
+    nests_coordinates = [] #list of nests coordinates
 
-    #initilize the ants_list
+    for i in range(0,m):
+        for j in range(0,n):
+            #randomly generate the grid
+            grid[i][j].tag = random.choices(['E','F','N'], weights=tag_weights)[0]
+
+            if grid[i][j].tag == 'N': # da finire
+                if max_Nest>0:
+                    max_Nest-=1
+                    nests_coordinates.append([i,j])
+                else:
+                    grid[i][j].tag = random.choices(['E','F'], weights=[0.995,0.005])[0] #if there are already max_Nest nests, the cell is randomly chosen between 'E' and 'F'
+
+
+    #Initilize the ants_list
     global ant_list 
     ant_list=[Ant(x=0,y=0,C=0) for _ in range(k)]
+
+    for ant in ant_list:
+        #randomly choose the nest
+        nest=random.choice(nests_coordinates)
+        ant.x,ant.y=nest[0],nest[1]
 
 
 
@@ -125,8 +144,7 @@ def transit(ant):
     return ant
 
 
-#da testare
-#sembrerebbe funzionare
+#per il resto funziona
 def update_ants(ants_list):
 
     global grid, delta,epsilon
@@ -134,6 +152,21 @@ def update_ants(ants_list):
     # Update ants position on the grid
     for ant in ants_list:
         ant = transit(ant)
+
+    #food interaction
+    #pheromone modifications
+    for ant in ants_list:
+        #the ant finds food and starts carrying it . Moreover, the pheromone level of the cell is increased of delta
+        if grid[ant.x][ant.y].tag == 'F' and ant.C == 0:
+            ant.C = 1
+            grid[ant.x][ant.y].pheromone +=delta
+            grid[ant.x][ant.y].tag = 'NP' #NP = new pheromone not to evaporate, it is a temporary tag used to check the cell has a new pheromone level but for this cycle it has not to evaporate
+
+        elif grid[ant.x][ant.y].tag == 'N' and ant.C == 1:
+            ant.C = 0
+        elif ant.C == 1 and grid[ant.x][ant.y].tag != 'F':    #the ant brings food so the pheromone level of the cell is increased of delta
+            grid[ant.x][ant.y].pheromone +=delta
+            grid[ant.x][ant.y].tag = 'P'
     
     #pheromone evaporation
     for i in range(0,len(grid)):
@@ -144,26 +177,15 @@ def update_ants(ants_list):
                 else :
                     grid[i][j].pheromone = 0
                     grid[i][j].tag = 'E'
+            elif grid[i][j].tag == 'NP':
+                grid[i][j].tag = 'P' #set up for the next cycle
         
-    #food interaction
-    #pheromone modifications
-    for ant in ants_list:
-        #the ant finds food and starts carrying it . Moreover, the pheromone level of the cell is increased of delta
-        if grid[ant.x][ant.y].tag == 'F' and ant.C == 0:
-            ant.C = 1
-            grid[ant.x][ant.y].pheromone +=delta
-            grid[ant.x][ant.y].tag = 'P'
-        elif grid[ant.x][ant.y].tag == 'N' and ant.C == 1:
-            ant.C = 0
-        elif ant.C == 1 and grid[ant.x][ant.y].tag != 'F':    #the ant brings food so the pheromone level of the cell is increased of delta
-            grid[ant.x][ant.y].pheromone +=delta
-            grid[ant.x][ant.y].tag = 'P'
     
 
 
     return ants_list
 
-
+#ok, funziona ed è stata testata
 def plot_ants():
     global grid, ant_list
 
@@ -206,9 +228,8 @@ def plot_ants():
 
 
 # foraging function
-#da finire
 # k = numero di iterazioni
-
+#ok, funziona ed è stata testata
 def foraging(k):
     global grid, ant_list    
     plot_ants()
@@ -222,8 +243,7 @@ def foraging(k):
 
 #--------------------------------------------------------------
 
-#test the functions
-
+#test the debugging functions
 
 def print_grid():
         #stampa la matrice
@@ -234,7 +254,7 @@ def print_grid():
         print()  # Vai a capo alla fine di ogni riga
         print("-----------------------------------\n")
 
-
+#print the ants info on terminal
 def print_ants():
     print("-----------------------------------\n")
     print("Ants:\n")
@@ -245,31 +265,17 @@ def print_ants():
 
 
 
+#test the assignment functions
+m=81
+n=79
+scene_grid(m,n,21)
+foraging(0)
 
 
 
-scene_grid(4,4,1)
-#test the functions
-
-ant_list_test=ant_list
-for i in range(0, 5):
 
 
-    print("%d° Transition of the first ant al tempo :",i,"\n")
-
-    ant_list_test=update_ants(ant_list_test)
-    print("Dati della formica :",ant_list_test[0].x, ant_list_test[0].y, ant_list_test[0].C, "\n")  # Usa 'end' per separare gli elementi con uno spazio invece di una nuova riga
-
-    print("Probabilities after the %d° transiction ant:",i,"\n")
-    #stampa la lista delle probabilità della prima formica
-    probabilities=probability(ant_list_test[0])
-    print(probabilities)
-
-
-    print("Grid after the %d° transiction ant:",i)
-    plot_ants()
-    print("\n-----------------------------------\n")
-
+#foraging(5)
 
 #test the functions
 #--------------------------------------------------------------
