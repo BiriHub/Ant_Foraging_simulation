@@ -2,8 +2,9 @@
 import random,math
 from PIL import Image, ImageDraw
 from matplotlib.pyplot import plot
+import os
 
-
+current_directory = os.getcwd()
 
 
 #classes definion
@@ -38,32 +39,42 @@ def scene_grid(m, n, k):
 
     #grid parameters for randomically generated grid
     max_Nest=5 # max number of nests
+    max_Food=math.ceil(k*2) # max number of food sources
 
-    tag_weights=[0.955,0.04,0.005] #probability for 'E', 'F','N' respectively
+    nests_coordinates = [] #list of nests coordinates
+
 
     # Generate a grid G with m rows and n columns
     global grid 
     grid=[[Grid_cell(tag='E',pheromone=0) for _ in range(n)] for _ in range(m)]
 
-    nests_coordinates = [] #list of nests coordinates
-
-    for i in range(0,m):
-        for j in range(0,n):
-            #randomly generate the grid
-            grid[i][j].tag = random.choices(['E','F','N'], weights=tag_weights)[0]
-
-            if grid[i][j].tag == 'N': # da finire
-                if max_Nest>0:
-                    max_Nest-=1
-                    nests_coordinates.append([i,j])
-                else:
-                    grid[i][j].tag = random.choices(['E','F'], weights=[0.995,0.005])[0] #if there are already max_Nest nests, the cell is randomly chosen between 'E' and 'F'
-
-
     #Initilize the ants_list
     global ant_list 
     ant_list=[Ant(x=0,y=0,C=0) for _ in range(k)]
 
+
+    for i in range(0,max_Nest):
+
+        # Generate a random position for the "max_Nest" nests
+        i = random.randint(0, m - 1)
+        j = random.randint(0, n - 1)
+
+        # Add the nest to the grid
+        grid[i][j].tag = 'N'
+
+        # Add the coordinates of the new nest to the list
+        nests_coordinates.append([i, j])
+
+    for i in range(0,max_Food):
+        # Generate a random position for the "max_Food" food sources
+        i = random.randint(0, m - 1)
+        j = random.randint(0, n - 1)
+
+        #Add the food source to the grid
+        grid[i][j].tag = 'F'
+
+
+    # Initialize the ants' positions
     for ant in ant_list:
         #randomly choose the nest
         nest=random.choice(nests_coordinates)
@@ -186,8 +197,8 @@ def update_ants(ants_list):
     return ants_list
 
 #ok, funziona ed è stata testata
-def plot_ants():
-    global grid, ant_list
+def plot_ants(z):
+    global grid, ant_list,current_directory
 
     # Define the colors of the cells
     colors = {'E': 'green', 'F': 'red', 'N': 'brown', 'P': 'darkgreen'}
@@ -223,8 +234,12 @@ def plot_ants():
         ant_size = 5  # Dimensione della formica
         draw.rectangle([ ant_y - ant_size,ant_x - ant_size, ant_y + ant_size,ant_x + ant_size], fill=ant_color)
 
+    #grid_image.save(current_directory + "\\bonusAssignmQuestion\\%d.png" %i)
+    grid_image.save(os.path.join(current_directory, 'bonusAssignmQuestion', f"{z}.png"))
+
     # Mostra la griglia con le formiche
     grid_image.show()
+
 
 
 # foraging function
@@ -232,10 +247,10 @@ def plot_ants():
 #ok, funziona ed è stata testata
 def foraging(k):
     global grid, ant_list    
-    plot_ants()
-    for t in range(0,k):
+    plot_ants(0)
+    for t in range(1,k):
         ant_list=update_ants(ant_list)
-        plot_ants()
+        plot_ants(t)
     
     return grid
 
@@ -266,16 +281,15 @@ def print_ants():
 
 
 #test the assignment functions
-m=81
-n=79
-scene_grid(m,n,21)
-foraging(0)
+m=84
+n=92
+
+scene_grid(m,n,30)
 
 
 
 
-
-#foraging(5)
+foraging(220)
 
 #test the functions
 #--------------------------------------------------------------
