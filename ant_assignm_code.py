@@ -65,7 +65,7 @@ def scene_grid(m, n, k):
     ant_list=[Ant(x=0,y=0,C=0) for _ in range(k)]
 
     # Generate nests in random positions on the grid
-    for i in range(0,max_Nest):
+    for w in range(0,max_Nest):
         # Generate a random position for the "max_Nest" nests
         i = random.randint(0, m - 1)
         j = random.randint(0, n - 1)
@@ -77,13 +77,13 @@ def scene_grid(m, n, k):
         nests_coordinates.append([i, j])
 
     # Generate food sources in random positions on the grid
-    for i in range(0,max_Food):
+    for w  in range(0,max_Food):
         # Generate a random position for the "max_Food" food sources
         i = random.randint(0, m - 1)
         j = random.randint(0, n - 1)
 
         # Check not to overwrite a nest cell
-        while grid[i][j].tag == 'N':
+        while grid[i][j].tag == 'N':    
             i = random.randint(0, m - 1)
             j = random.randint(0, n - 1)
 
